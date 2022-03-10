@@ -15,7 +15,8 @@ services:
         - common
       environment:
         PORT: 3000
-        MONGO_URL: mongodb://mongo/note_management
+        MONGO_URL: mongodb+srv://snag:712331@cluster0.gn0ez.mongodb.net/note_management?retryWrites=true&w=majority
+        # MONGO_URL: mongodb://mongo/note_management
         NODE_ENV: 'development'
 
   mongo:

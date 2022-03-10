@@ -127,5 +127,21 @@ networks:
 
 
 
-
+https://www.thanhlongdev.com/huong-dan-cach-deploy-project-nodejs-len-heroku/
 # Deploy to heroku
+
+
+https://dashboard.heroku.com/apps/tipmanagementnodejs/deploy/github
+sangpro1997@gmail.com
+1. connect to github
+2. exec manual deploy
+3. command:
+ show log : heroku logs --tail
+
+# deploy mongoDb
+https://cloud.mongodb.com/v2/622956953acad82cd2c02105#clusters/edit?filter=starter&fromPathSelector=true
+sangpro1997@gmail.com
+
+snag-712331
+
+mongodb+srv://snag:712331@cluster0.gn0ez.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
