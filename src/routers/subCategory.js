@@ -45,7 +45,7 @@ router.post('/save', async (req, res) => {
                 name: req.body.name,
                 description: req.body.description,
                 idParent: req.body.idParent,
-                // deteteTime: req.body.deteteTime,
+                deteteTime: null,
                 updateTime: new Date()
             });
             saveNote = await subCategory.save();
@@ -58,14 +58,47 @@ router.post('/save', async (req, res) => {
 });
 router.post('/delete/:id', async (req, res) => {
     try {
-        const SubCategory = await SubCategory.remove({ _id: req.params.id });
-        res.json(SubCategory);
+
+        const currentSubCategory = await SubCategory.findById({ _id: req.params.id });
+        let subCategory = null;
+        if(!currentSubCategory.deteteTime || currentSubCategory.deteteTime===undefined){
+            subCategory = await SubCategory.updateOne(
+                { _id: req.params.id },
+                {
+                    $set: {
+                        deteteTime: new Date()
+                    }
+
+                }
+            );
+        }else{
+            subCategory = await SubCategory.remove({ _id: req.params.id });
+        }
+        res.json(subCategory);
     }
     catch (err) {
         res.json({ message: err });
     }
 });
 
+router.post('/restore/:id', async (req, res) => {
+    try {
+
+        const subCategory = await SubCategory.updateOne(
+                { _id: req.params.id },
+                {
+                    $set: {
+                        deteteTime: null
+                    }
+
+                }
+            );
+        res.json(subCategory);
+    }
+    catch (err) {
+        res.json({ message: err });
+    }
+});
 
 
 module.exports = router;

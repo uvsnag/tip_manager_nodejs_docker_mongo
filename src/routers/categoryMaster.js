@@ -43,7 +43,7 @@ router.post('/save', async (req, res) => {
             const categoryMaster = new CategoryMaster({
                 name: req.body.name,
                 description: req.body.description,
-                // deteteTime: req.body.deteteTime,
+                deteteTime: null,
                 updateTime: new Date()
             });
             saveCategoryMaster = await categoryMaster.save();
@@ -56,7 +56,23 @@ router.post('/save', async (req, res) => {
 });
 router.post('/delete/:id', async (req, res) => {
     try {
-        const categoryMaster = await CategoryMaster.remove({ _id: req.params.id });
+
+        const currentCategoryMaster = await CategoryMaster.findById({ _id: req.params.id });
+        let categoryMaster = null;
+     
+        if (!currentCategoryMaster.deteteTime || currentCategoryMaster.deteteTime === undefined) {
+            categoryMaster = await CategoryMaster.updateOne(
+                { _id: req.params.id },
+                {
+                    $set: {
+                        deteteTime: new Date()
+                    }
+
+                }
+            );
+        } else {
+            categoryMaster = await CategoryMaster.remove({ _id: req.params.id });
+        }
         res.json(categoryMaster);
     }
     catch (err) {
@@ -64,7 +80,24 @@ router.post('/delete/:id', async (req, res) => {
     }
 });
 
+router.post('/restore/:id', async (req, res) => {
+    try {
 
+        const categoryMaster = await CategoryMaster.updateOne(
+                { _id: req.params.id },
+                {
+                    $set: {
+                        deteteTime: null
+                    }
+
+                }
+            );
+        res.json(categoryMaster);
+    }
+    catch (err) {
+        res.json({ message: err });
+    }
+});
 
 
 module.exports = router;

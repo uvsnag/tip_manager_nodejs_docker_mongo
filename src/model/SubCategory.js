@@ -6,7 +6,7 @@ const SubCategorySchema = mongoose.Schema({
         type: String,
         require: true
     },
-    content:{
+    description:{
         type: String,
         require: true
     },

@@ -6,7 +6,7 @@ key = require('./config/main');
 connectDB = require('./config/db');
 const CategoryMaster = require('./model/CategoryMaster')
 const SubCategory = require('./model/SubCategory')
-const Node = require('./model/Note')
+const Note = require('./model/Note')
 
 
 
@@ -27,98 +27,84 @@ app.use('/notes', noteRouter);
 app.use('/subcategories', subCategory);
 
 app.get('/all-tips', async (req, res) => {
+    const dataDeleted = req.query.dataDeleted;
+    console.log("dataDeleted:" + dataDeleted);
+    let noteInfo3Levels = new Array();
+    await getAllData(dataDeleted, noteInfo3Levels)
 
-    try {
-        const categoryMaster = await CategoryMaster.find();
+    res.json(noteInfo3Levels)
+});
+
+async function getAllData(dataDeleted, noteInfo3Levels) {
+    
+    let noteInfoSubCates = new Array();
+
+
+    const categoryMaster = (dataDeleted === "true") ? await CategoryMaster.find().sort({ "_id": 1 })
+        : await CategoryMaster.find({ deteteTime: null }).find().sort({ "_id": 1 });
+
+    if (categoryMaster) {
         console.log("categoryMaster:" + categoryMaster);
-        let noteInfo3Levels = new Array();
-        let noteInfoSubCates = new Array();
-        if (categoryMaster) {
-            let proGetData = new Promise(function (resolve, reject) {
 
-                categoryMaster.forEach(async (itemMas) => {
-                    let flagSub=false;
-                    const subCategory = await SubCategory.find({ idParent: itemMas._id });
-                    console.log("subCategory:" + subCategory);
+        for (const itemMas of categoryMaster) {
+            const subCategory = (dataDeleted === "true") ? await SubCategory.find({ idParent: itemMas._id }).find().sort({ "_id": 1 })
+                : await SubCategory.find({ idParent: itemMas._id, deteteTime: null }).find().sort({ "_id": 1 });
 
-                    if (subCategory) {
+            if (subCategory) {
 
+                console.log("subCategory:" + subCategory);
 
-                        let proGetData = new Promise(function (resolve, reject) {
-                            subCategory.forEach(async (itemSub) => {
-                                note = await Node.find({ idParent: itemSub._id });
-                                console.log("note:" + note);
-                                noteInfoSubCates.push({
-                                    // subCategory: itemSub,
-                                    _id:itemSub._id,
-                                    name:itemSub.name,
-                                    description:itemSub.description,
-                                    idParent:itemSub.idParent,
-                                    updateTime:itemSub.updateTime,
-                                    note: note
-                                })
-                                if (noteInfoSubCates.length == subCategory.length) {
-                                    resolve();
-                                    flagSub =true
-                                }
-                            });
-                        });
+                await getSubCategoryData(dataDeleted, subCategory, noteInfoSubCates);
 
-                        proGetData.then(() => {
-                            console.log("noteInfo3Levels");
-                        });
-
-                    }
-                     await new Promise(resolve => setTimeout(resolve, 500));
-                    noteInfo3Levels.push({
-                        categoryMaster: itemMas,
-                        subCategory: noteInfoSubCates
-                    });
-
-                    noteInfoSubCates = new Array();
-
-                    console.log("noteInfo3Levels.length:" + noteInfo3Levels.length + "-categoryMaster.length :" + categoryMaster.length);
-                    if (noteInfo3Levels.length == categoryMaster.length) {
-                        console.log("resolve -time :" + new Date().getTime());
-                        resolve(noteInfo3Levels);
-
-                    }
-                });
+            }
+            noteInfo3Levels.push({
+                categoryMaster: itemMas,
+                subCategory: noteInfoSubCates
             });
-            proGetData.then(result => {
-                console.log("res:" + result + "-time :" + new Date().getTime());
-                res.json(result);
-            })
+            console.log("oGetData.then noteInfo3Levels");
+            noteInfo3Levels.forEach((it) => {
+                console.log("it:" + it);
+            });
+
+            noteInfoSubCates = new Array();
         }
+
+    }
+
+}
+
+async function getSubCategoryData(dataDeleted, subCategory, noteInfoSubCates) {
+
+    for (const itemSub of subCategory) {
+        const note = (dataDeleted === "true") ? await Note.find({ idParent: itemSub._id }).find().sort({ "_id": 1 })
+            : await Note.find({ idParent: itemSub._id, deteteTime: null }).find().sort({ "_id": 1 });
+
+        console.log("note:" + note);
+
+        noteInfoSubCates.push({
+            _id: itemSub._id,
+            name: itemSub.name,
+            description: itemSub.description,
+            idParent: itemSub.idParent,
+            updateTime: itemSub.updateTime,
+            note: note
+        })
+    }
+
+}
+
+
+app.get('/search', async (req, res) => {
+    try {
+        const searchStr = req.query.strSearch;
+        console.log("searchStr:" + searchStr);
+        console.log("'/'+searchStr+'/':" + '/' + searchStr + '/');
+        const currentNote = await Note.find({ contents: '/' + searchStr + '/' });
+        res.json(currentNote);
     }
     catch (err) {
         res.json({ message: err });
     }
 });
-// async function getNote(subCategory, noteInfoSubCates) {
-//     if (!subCategory) {
-//         return null;
-//     }
-//     // let noteInfoSubCates = new Array();
-//     let note = null;
-//     let proGetData = new Promise(function (resolve, reject) {
-//         subCategory.forEach(async (itemSub) => {
-//             note = await Node.find({ idParent: itemSub._id });
-//             console.log("note:" + note);
-//             noteInfoSubCates.push({
-//                 subCategory: itemSub,
-//                 note: note
-//             })
-//             if (noteInfoSubCates.length == subCategory.length) {
-//                 resolve(noteInfoSubCates);
-//             }
-//         });
-//     });
-//     proGetData.then(result => {
-//         console.log("getNote result:" + result);
-//         console.log("getNote -time :" + new Date().getTime());
-//         noteInfoSubCates = result;
-//     })
-// }
 
 app.listen(port, () => console.log('Server is running....'))

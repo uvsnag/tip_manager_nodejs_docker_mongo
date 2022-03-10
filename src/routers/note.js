@@ -45,7 +45,7 @@ router.post('/save', async (req, res) => {
                 name: req.body.name,
                 contents: req.body.contents,
                 idParent: req.body.idParent,
-                // deteteTime: req.body.deteteTime,
+                deteteTime: null,
                 updateTime: new Date()
             });
             saveNote = await note.save();
@@ -58,15 +58,49 @@ router.post('/save', async (req, res) => {
 });
 router.post('/delete/:id', async (req, res) => {
     try {
-        const Note = await Note.remove({ _id: req.params.id });
-        res.json(Note);
+        const currentNote = await Note.findById({ _id: req.params.id });
+        let note = null;
+        console.log("currentNote.deteteTime:"+currentNote.deteteTime);
+        if(!currentNote.deteteTime || currentNote.deteteTime===undefined){
+            note = await Note.updateOne(
+                { _id: req.params.id },
+                {
+                    $set: {
+                        deteteTime: new Date()
+                    }
+
+                }
+            );
+        }else{
+             note = await Note.remove({ _id: req.params.id });
+        }
+
+
+        res.json(note);
     }
     catch (err) {
         res.json({ message: err });
     }
 });
 
+router.post('/restore/:id', async (req, res) => {
+    try {
 
+        const note = await Note.updateOne(
+                { _id: req.params.id },
+                {
+                    $set: {
+                        deteteTime: null
+                    }
+
+                }
+            );
+        res.json(note);
+    }
+    catch (err) {
+        res.json({ message: err });
+    }
+});
 
 
 module.exports = router;
